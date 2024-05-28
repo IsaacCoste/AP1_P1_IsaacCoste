@@ -1,10 +1,17 @@
 using AP1_P1_IsaacCoste.Components;
+using AP1_P1_IsaacCoste.DAL;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var ConStr = builder.Configuration.GetConnectionString("ConStr");
+builder.Services.AddDbContext<Contexto>(options => options.UseSqlite(ConStr));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 
