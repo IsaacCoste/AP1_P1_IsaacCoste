@@ -1,0 +1,120 @@
+﻿@page "/Articulos/Index/"
+@inject ArticulosService articoloService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<div class="card">
+    <div class="card-header text-center">
+        <h1>Consulta Articulos</h1>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-outline-primary" @onclick="Crear"><Icon Name="IconName.Plus" />Crear</button>
+        <div class="row">
+            <label>Buscar por:</label>
+            <div class="col-md-3">
+                <InputSelect @bind-Value="Opcion" class="form-select">
+                    <option value="0">Seleccione el Campo</option>
+                    <option value="1">ID</option>
+                    <option value="2">Descripci&oacute;n</option>
+                    <option value="3">Costo</option>
+                </InputSelect>
+            </div>
+            <div class="col-auto">
+                @switch (Opcion)
+                {
+                    case 1:
+                        <div class="input-group">
+                            <InputNumber min="1" @bind-Value="Articulo.ArticuloId" class="form-control"></InputNumber>
+                            <button class="btn btn-primary" @onclick="Buscar"><Icon Name="IconName.Search" /> Buscar</button>
+                        </div>
+                        break;
+                    case 2:
+                        <div class="input-group">
+                            <InputText @bind-Value="Filtrar" class="form-control"></InputText>
+                            <button type="button" class="btn btn-primary" @onclick="Buscar"><Icon Name="IconName.Search" /> Buscar</button>
+                        </div>
+                        break;
+                    case 3:
+                        <div class="input-group">
+                            <InputNumber min="0.01" @bind-Value="Articulo.Costo" class="form-control"></InputNumber>
+                            <button class="btn btn-primary" @onclick="Buscar"><Icon Name="IconName.Search" /> Buscar</button>
+                        </div>
+                        break;
+                }
+            </div>
+        </div>
+        <br />
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripci&oacute;n</th>
+                    <th>Costo</th>
+                    <th>Ganancia</th>
+                    <th>Precio</th>
+                    <th>Editar</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var articulo in ListArticulos)
+                {
+                    <tr>
+                        <td>@articulo.ArticuloId</td>
+                        <td>@articulo.Descripcion</td>
+                        <td>@articulo.Costo</td>
+                        <td>@articulo.Ganancia</td>
+                        <td>@articulo.Precio</td>
+                        <td>
+                            <a href="/Articulos/Edit/@articulo.ArticuloId" style="font-size: 1.5em;"> <Icon Name="IconName.Pencil" /></a>
+                        </td>
+                        <td>
+                            <a href="/Articulos/Delete/@articulo.ArticuloId" style="font-size: 1.5em;"><Icon Name="IconName.Trash" /></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="card-footer">
+            <div class="col-md-3">
+                <h6>Total de Articulos: @ListArticulos.Count()</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public Articulos Articulo { get; set; } = new Articulos();
+    public List<Articulos> ListArticulos { get; set; } = new List<Articulos>();
+    public int? Opcion { get; set; } = 0;
+    private string Filtrar = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        ListArticulos = await articoloService.Listar(a => true);
+    }
+    public Task Crear()
+    {
+        NavigationManager.NavigateTo("/Articulos/Create");
+        return Task.CompletedTask;
+    }
+    public async Task Buscar()
+    {
+        switch (Opcion)
+        {
+            case 1:
+                ListArticulos = await articoloService
+                .Listar(a => a.ArticuloId == Articulo.ArticuloId);
+                break;
+            case 2:
+                ListArticulos = await articoloService
+                .Listar(t => t.Descripcion.ToLower()
+                .Contains(Filtrar.ToLower()));
+                break;
+            case 3:
+                ListArticulos = await articoloService
+                .Listar(a => a.Costo == Articulo.Costo);
+                break;
+        }
+    }
+}
