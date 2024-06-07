@@ -1,0 +1,57 @@
+﻿@page "/Articulos/Delete/{ArticuloId:int}"
+@inject ArticulosService articuloService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<div class="card">
+    <div class="card-header">
+        <h1> Eliminar Articulos</h1>
+    </div>
+    <div class="card-body">
+        <h5> Desea eliminar este Art&iacute;culo?</h5>
+        <p>ID: @Articulo.ArticuloId</p>
+        <p>Descripci&oacute;n: @Articulo.Descripcion</p>
+        <p>Costo: @Articulo.Costo</p>
+        <p>Ganancia: @Articulo.Ganancia</p>
+        <p>Precio: @Articulo.Precio</p>
+    </div>
+    <div class="card-footer text-center">
+        <button class="btn btn-danger" @onclick="Eliminar"><Icon Name="IconName.Floppy" /> Modificar</button>
+        <button class="btn btn-outline-primary" @onclick="Volver"><Icon Name="IconName.Arrow90DegLeft" /> Volver</button>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public int ArticuloId { get; set; }
+    public Articulos Articulo { get; set; } = new Articulos();
+    private bool HayArticulo = false;
+    public List<ToastMessage> messages = new List<ToastMessage>();
+    protected override async Task OnInitializedAsync()
+    {
+        Articulo.ArticuloId = ArticuloId;
+        Articulo = await articuloService.Buscar(Articulo.ArticuloId);
+    }
+    public void Notificacion(ToastType toastType, string message) => messages.Add(ShowToast(toastType, message));
+    private ToastMessage ShowToast(ToastType toastType, string message)
+    {
+        var mensaje = new ToastMessage()
+            {
+                Type = toastType,
+                Message = $"{message}. El {DateTime.Now.ToString("dd/MM/yyyy")} a las {DateTime.Now.ToString("hh:mm tt")}",
+            };
+        toastService.Notify(mensaje);
+        return mensaje;
+    }
+    public async Task Eliminar()
+    {
+        await articuloService.Eliminar(Articulo!);
+        Notificacion(ToastType.Warning, "Se eliminaron los datos correctamente.");
+        await Task.Delay(1500);
+        await Volver();
+    }
+    public Task Volver()
+    {
+        NavigationManager.NavigateTo("/Articulos/Index/");
+        return Task.CompletedTask;
+    }
+}
