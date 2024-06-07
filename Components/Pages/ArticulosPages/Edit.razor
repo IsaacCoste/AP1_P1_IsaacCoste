@@ -1,0 +1,108 @@
+﻿@page "/Articulos/Edit/{ArticuloId:int}"
+@inject ArticulosService articuloService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<EditForm Model="Articulo" OnValidSubmit="Modificar">
+    <DataAnnotationsValidator />
+    <div class="card">
+        <div class="card-header">
+            <h1>Modificar Articulos</h1>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>ID</label>
+                    <InputNumber @bind-Value="Articulo.ArticuloId" class="form-control" ReadOnly></InputNumber>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md">
+                    <label>Descripci&oacute;n</label>
+                    <InputText @bind-Value="Articulo.Descripcion" class="form-control"></InputText>
+                    <ValidationMessage For="@(() => Articulo.Descripcion)" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md">
+                    <label>Costo</label>
+                    <InputNumber @bind-Value="Articulo.Costo" class="form-control"></InputNumber>
+                    <ValidationMessage For="@(() => Articulo.Costo)" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md">
+                    <label>Ganancia</label>
+                    <InputNumber @bind-Value="Articulo.Ganancia" class="form-control"></InputNumber>
+                    <ValidationMessage For="@(() => Articulo.Ganancia)" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md">
+                    <label>Precio</label>
+                    <InputNumber @bind-Value="Articulo.Precio" class="form-control"></InputNumber>
+                    <ValidationMessage For="@(() => Articulo.Precio)" />
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-center">
+            <button class="btn btn-outline-primary" @onclick="Nuevo"><Icon Name="IconName.Plus" /> Nuevo </button>
+            <button class="btn btn-success"><Icon Name="IconName.Floppy" /> Modificar</button>
+            <button class="btn btn-outline-primary" @onclick="Volver"><Icon Name="IconName.Arrow90DegLeft" /> Volver</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ArticuloId { get; set; }
+    public Articulos Articulo { get; set; } = new Articulos();
+    private bool HayArticulo = false;
+    public List<ToastMessage> messages = new List<ToastMessage>();
+    protected override async Task OnInitializedAsync()
+    {
+        Articulo.ArticuloId = ArticuloId;
+        Articulo = await articuloService.Buscar(Articulo.ArticuloId);
+    }
+
+    public void Notificacion(ToastType toastType, string message) => messages.Add(ShowToast(toastType, message));
+    private ToastMessage ShowToast(ToastType toastType, string message)
+    {
+        var mensaje = new ToastMessage()
+            {
+                Type = toastType,
+                Message = $"{message}. El {DateTime.Now.ToString("dd/MM/yyyy")} a las {DateTime.Now.ToString("hh:mm tt")}",
+            };
+        toastService.Notify(mensaje);
+        return mensaje;
+    }
+    public async Task<bool> Validar()
+    {
+        HayArticulo = await articuloService.Existe(Articulo.ArticuloId, Articulo.Descripcion);
+        return !HayArticulo;
+    }
+    public async Task Modificar()
+    {
+        if (!await Validar())
+        {
+            Notificacion(ToastType.Warning, $"Ya existe un artículo con esta Descripción.");
+            return;
+        }
+        var guardo = await articuloService.Guardar(Articulo);
+        if (guardo)
+        {
+            Notificacion(ToastType.Success, "El artículo se ha creado correctamente");
+        }
+    }
+    public Task Volver()
+    {
+        NavigationManager.NavigateTo("/Articulos/Index/");
+        return Task.CompletedTask;
+    }
+    public Task Nuevo()
+    {
+        Articulo = new Articulos();
+        HayArticulo = false;
+        return Task.CompletedTask;
+    }
+}
